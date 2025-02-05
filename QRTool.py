@@ -172,7 +172,6 @@ def generate_bulk_qr_codes():
 
 root = tk.Tk()
 root.title("QR Code 產生與掃描工具")
-root.geometry("400x600")
 root.resizable(False, False)
 
 title_label = tk.Label(root, text="QR Code 產生與掃描工具", font=("Arial", 16))
