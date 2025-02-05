@@ -1,0 +1,17 @@
+build/QRTool/Analysis-00.toc
+0.ico
+build/QRTool/base_library.zip
+build/QRTool/EXE-00.toc
+build/QRTool/localpycs/pyimod01_archive.pyc
+build/QRTool/localpycs/pyimod02_importers.pyc
+build/QRTool/localpycs/pyimod03_ctypes.pyc
+build/QRTool/localpycs/pyimod04_pywin32.pyc
+build/QRTool/localpycs/struct.pyc
+build/QRTool/PKG-00.toc
+build/QRTool/PYZ-00.pyz
+build/QRTool/PYZ-00.toc
+build/QRTool/QRTool.pkg
+build/QRTool/warn-QRTool.txt
+build/QRTool/xref-QRTool.html
+dist/QRTool_v3.exe
+QRTool.spec
