@@ -81,9 +81,6 @@ def generate_muti_qr_code(url, filename):
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
     img.thumbnail((200, 200))
-    qr_img_tk = ImageTk.PhotoImage(img)
-    qr_label.config(image=qr_img_tk)
-    qr_label.image = qr_img_tk
     qr_label.qr_img = img
     img.save(filename)
     return filename  # 回傳檔案名稱
