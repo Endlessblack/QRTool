@@ -15,3 +15,6 @@ build/QRTool/warn-QRTool.txt
 build/QRTool/xref-QRTool.html
 dist/QRTool_v3.exe
 QRTool.spec
+dist/QRTool.exe
+dist/QRTool.exe
+/dist
