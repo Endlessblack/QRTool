@@ -1,5 +1,4 @@
 import cv2
-from pyzbar.pyzbar import decode
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import qrcode
@@ -8,34 +7,37 @@ import pyperclip
 import pandas as pd
 import openpyxl
 import os
+import numpy as np
 
 def read_qr_code(image_path):
-    image = cv2.imread(image_path)
-    if image is None:
-        messagebox.showerror("錯誤", "無法讀取圖片，請檢查路徑是否正確。")
+    try:
+        with open(image_path, "rb") as f:
+            image_bytes = np.asarray(bytearray(f.read()), dtype=np.uint8)
+            image = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
+    except Exception as e:
+        messagebox.showerror("錯誤", f"無法讀取圖片：{e}")
         return
-    
-    decoded_objects = decode(image)
-    if not decoded_objects:
+
+    detector = cv2.QRCodeDetector()
+    data, bbox, _ = detector.detectAndDecode(image)
+
+    if not data:
         messagebox.showinfo("結果", "未偵測到 QR Code。")
         return
-    
-    qr_data_list = [obj.data.decode("utf-8") for obj in decoded_objects]
-    qr_data_text = "\n".join(qr_data_list)
-    
+
     def copy_to_clipboard():
-        pyperclip.copy(qr_data_text)
+        pyperclip.copy(data)
         messagebox.showinfo("已複製", "QR Code 內容已複製到剪貼簿！")
-    
+
     result_window = tk.Toplevel(root)
     result_window.title("QR Code 內容")
     result_window.geometry("400x300")
-    
+
     text_box = tk.Text(result_window, wrap="word", font=("Arial", 12))
-    text_box.insert("1.0", qr_data_text)
+    text_box.insert("1.0", data)
     text_box.config(state="disabled")
     text_box.pack(expand=True, fill="both", padx=10, pady=10)
-    
+
     copy_button = tk.Button(result_window, text="複製內容", command=copy_to_clipboard)
     copy_button.pack(pady=5)
 
