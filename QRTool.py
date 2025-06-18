@@ -89,16 +89,12 @@ def screenshot_and_detect_qrcode():
     retval, decoded_info, points, _ = detector.detectAndDecodeMulti(cv_image)
 
     if not retval or not decoded_info:
-        messagebox.showinfo("結果", "選取區域中未偵測到 QR Code。")
+        messagebox.showinfo("結果", "選取區域中未偵測到任何 QR Code。")
         return
-
-    def copy_to_clipboard():
-        pyperclip.copy(retval)
-        messagebox.showinfo("已複製", "QR Code 內容已複製到剪貼簿！")
 
     result_window = tk.Toplevel(root)
     result_window.title("掃描結果 - 多個 QR Code")
-    result_window.geometry("1000x200")
+    result_window.geometry("1000x100")
 
     text_box = tk.Text(result_window, wrap="word", font=("Arial", 12))
     text_box.pack(expand=True, fill="both", padx=10, pady=10)
@@ -115,7 +111,7 @@ def screenshot_and_detect_qrcode():
 
     copy_button = tk.Button(result_window, text="複製全部內容", command=copy_all_to_clipboard)
     copy_button.pack(pady=5)
-
+    
 def read_qr_code(image_path):
     try:
         with open(image_path, "rb") as f:
