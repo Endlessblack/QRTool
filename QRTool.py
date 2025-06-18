@@ -8,6 +8,113 @@ import pandas as pd
 import openpyxl
 import os
 import numpy as np
+from PIL import ImageGrab
+import ctypes
+from screeninfo import get_monitors
+
+def get_virtual_screen_bounds():
+    monitors = get_monitors()
+    x_coords = [m.x for m in monitors]
+    y_coords = [m.y for m in monitors]
+    widths  = [m.x + m.width for m in monitors]
+    heights = [m.y + m.height for m in monitors]
+    return min(x_coords), min(y_coords), max(widths), max(heights)
+
+def get_scaling_factor():
+    user32 = ctypes.windll.user32
+    gdi32 = ctypes.windll.gdi32
+    hdc = user32.GetDC(0)
+    logical_dpi = gdi32.GetDeviceCaps(hdc, 88)  # LOGPIXELSX
+    user32.ReleaseDC(0, hdc)
+    return logical_dpi / 96  # 96 是 100% 時的 DPI
+
+def screenshot_and_detect_qrcode():
+    selection = {'x1': 0, 'y1': 0, 'x2': 0, 'y2': 0}
+    x0, y0, x1, y1 = get_virtual_screen_bounds()
+    screen_width = x1 - x0
+    screen_height = y1 - y0
+
+    def on_mouse_down(event):
+        selection['x1'] = event.x_root
+        selection['y1'] = event.y_root
+
+    def on_mouse_drag(event):
+        canvas.delete("selection")
+        canvas.create_rectangle(
+            selection['x1'] - x0,
+            selection['y1'] - y0,
+            event.x_root - x0,
+            event.y_root - y0,
+            outline='red',
+            width=2,
+            tag="selection"
+        )
+
+    def on_mouse_up(event):
+        selection['x2'] = event.x_root
+        selection['y2'] = event.y_root
+        top.destroy()
+
+    top = tk.Toplevel(root)
+    top.geometry(f"{screen_width}x{screen_height}+{x0}+{y0}")
+    top.attributes("-alpha", 0.3)
+    top.attributes("-topmost", True)
+    top.overrideredirect(True)
+    top.config(bg='black')
+
+    canvas = tk.Canvas(top, cursor="cross", bg='black', highlightthickness=0)
+    canvas.pack(fill="both", expand=True)
+
+    canvas.bind("<ButtonPress-1>", on_mouse_down)
+    canvas.bind("<B1-Motion>", on_mouse_drag)
+    canvas.bind("<ButtonRelease-1>", on_mouse_up)
+
+    top.wait_window()
+
+    x1 = min(selection['x1'], selection['x2'])
+    y1 = min(selection['y1'], selection['y2'])
+    x2 = max(selection['x1'], selection['x2'])
+    y2 = max(selection['y1'], selection['y2'])
+
+    if x2 - x1 == 0 or y2 - y1 == 0:
+        messagebox.showinfo("提示", "沒有選取任何區域。")
+        return
+
+    screenshot = ImageGrab.grab(bbox=(x1, y1, x2, y2))
+    cv_image = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    detector = cv2.QRCodeDetector()
+    retval, decoded_info, points, _ = detector.detectAndDecodeMulti(cv_image)
+
+    if not retval or not decoded_info:
+        messagebox.showinfo("結果", "選取區域中未偵測到 QR Code。")
+        return
+
+    def copy_to_clipboard():
+        pyperclip.copy(retval)
+        messagebox.showinfo("已複製", "QR Code 內容已複製到剪貼簿！")
+
+    result_window = tk.Toplevel(root)
+    result_window.title("掃描結果 - 多個 QR Code")
+    result_window.geometry("1000x200")
+
+    text_box = tk.Text(result_window, wrap="word", font=("Arial", 12))
+    text_box.pack(expand=True, fill="both", padx=10, pady=10)
+
+    for idx, qr_data in enumerate(decoded_info):
+        if qr_data:
+            text_box.insert("end", f"[{idx + 1}] {qr_data}\n")
+
+    text_box.config(state="disabled")
+
+    def copy_all_to_clipboard():
+        pyperclip.copy("\n".join(filter(None, decoded_info)))
+        messagebox.showinfo("已複製", "所有 QR Code 內容已複製到剪貼簿！")
+
+    copy_button = tk.Button(result_window, text="複製全部內容", command=copy_all_to_clipboard)
+    copy_button.pack(pady=5)
 
 def read_qr_code(image_path):
     try:
@@ -199,6 +306,9 @@ qr_label.pack(pady=20)
 
 scan_button = tk.Button(root, text="選擇圖片掃描 QR Code", font=("Arial", 12), command=select_image)
 scan_button.pack(pady=10)
+
+screen_button = tk.Button(root, text="選取螢幕範圍掃描 QR Code", font=("Arial", 12), command=screenshot_and_detect_qrcode)
+screen_button.pack(pady=10)
 
 generate_exfile_button = tk.Button(root,text="建立範例Excel檔",font=("Arial",12),command=generate_example_excel)
 generate_exfile_button.pack(pady=10)
