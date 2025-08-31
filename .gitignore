@@ -18,3 +18,4 @@ QRTool.spec
 dist/QRTool.exe
 dist/QRTool.exe
 /dist
+/.venv
